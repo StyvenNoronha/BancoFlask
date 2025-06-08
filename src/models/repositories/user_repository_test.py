@@ -22,25 +22,47 @@ def test_repository():
     repo = UserRepository(mock_connection)
     repo.registry_user(username, password)
 
-
     cursor = mock_connection.cursor.return_value
 
-    assert 'INSERT INTO users' in cursor.execute.call_args[0][0]
-    assert '(username, password, balance)' in cursor.execute.call_args[0][0]
-    assert 'VALUES' in cursor.execute.call_args[0][0]
+    assert "INSERT INTO users" in cursor.execute.call_args[0][0]
+    assert "(username, password, balance)" in cursor.execute.call_args[0][0]
+    assert "VALUES" in cursor.execute.call_args[0][0]
     assert cursor.execute.call_args[0][1] == (username, password, 0)
 
 
-"""    db_connection_handler.connect()
-    conn = db_connection_handler.get_connection()
-    repo = UserRepository(conn)
+def test_edit_balance():
+    user_id = 123
+    new_balance = 1000.00
+    mock_connection = MockConnection()
+    repo = UserRepository(mock_connection)
+    repo.edit_balance(user_id, new_balance)
+
+    cursor = mock_connection.cursor.return_value
+
+    assert "UPDATE users" in cursor.execute.call_args[0][0]
+    assert "SET balance" in cursor.execute.call_args[0][0]
+    assert " WHERE id = ?" in cursor.execute.call_args[0][0]
+    assert cursor.execute.call_args[0][1] == (
+        new_balance,
+        user_id,
+    )
+
+    mock_connection.commit.assert_called_once()
 
 
-    username = "alberto"
-    password = "123456seven"
+def test_get_user_by_username():
+    username = "meuUsername"
 
-    #repo.registry_user(username,password)
-    user = repo.get_user_by_username(username)
-    print()
-    print(user)
-    repo.edit_balance(user[0],1000.00)"""
+    mock_connection = MockConnection()
+    repo = UserRepository(mock_connection)
+
+    repo.get_user_by_username(username)
+
+    cursor = mock_connection.cursor.return_value
+
+    assert "SELECT id, username, password" in cursor.execute.call_args[0][0]
+    assert "FROM users" in cursor.execute.call_args[0][0]
+    assert "WHERE username = ?" in cursor.execute.call_args[0][0]
+    assert cursor.execute.call_args[0][1] == (username,)
+
+    cursor.fetchone.assert_called_once()
