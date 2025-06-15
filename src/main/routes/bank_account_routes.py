@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, request # type: ignore
+from flask import Blueprint, jsonify, request
 from src.views.http_types.http_request import HttpRequest
 
 from src.main.composer.user_register_composer import user_register_composer
 from src.main.composer.login_creator_composer import login_creator_composer
 from src.main.composer.balance_editor_composer import balance_editor_composer
+
+from src.main.middlewares.auth_jwt import auth_jwt_verify
 
 bank_routes_bp = Blueprint("bank_routes", __name__)
 
@@ -28,9 +30,11 @@ def create_login():
 @bank_routes_bp.route("/bank/balance/<user_id>", methods=["PATCH"])
 def edit_balance(user_id):
     try:
+        token_information = auth_jwt_verify()
         http_request = HttpRequest(
             body=request.json,
             params={ "user_id": user_id },
+            token_infos=token_information,
             headers=request.headers
             )
         http_response = balance_editor_composer().handle(http_request)
